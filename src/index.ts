@@ -199,9 +199,9 @@ const SendEmailSchema = z.object({
     mimeType: z.enum(['text/plain', 'text/html', 'multipart/alternative']).optional().default('text/plain').describe("Email content type"),
     cc: z.array(z.string()).optional().describe("List of CC recipients"),
     bcc: z.array(z.string()).optional().describe("List of BCC recipients"),
-    threadId: z.string().optional().describe("Thread ID to reply to"),
+    threadId: z.string().optional().describe("Thread ID to reply to. When replying (inReplyTo set), threadId enables automatic References chain building"),
     inReplyTo: z.string().optional().describe("Message ID being replied to"),
-    references: z.string().optional().describe("Full References header chain for proper email threading"),
+    references: z.string().optional().describe("Full References header chain (auto-built from threadId if not provided). Format: '<msg1@example.com> <msg2@example.com>'"),
     attachments: z.array(z.string()).optional().describe("List of file paths to attach to the email"),
 });
 
@@ -602,6 +602,31 @@ async function main() {
                 case "send_email":
                 case "draft_email": {
                     const validatedArgs = SendEmailSchema.parse(args);
+                    
+                    if (validatedArgs.inReplyTo && !validatedArgs.references && validatedArgs.threadId) {
+                        try {
+                            const thread = await gmail.users.threads.get({
+                                userId: 'me',
+                                id: validatedArgs.threadId,
+                                format: 'full'
+                            });
+                            
+                            const messageIds = thread.data.messages
+                                ?.map(msg => {
+                                    const headers = msg.payload?.headers || [];
+                                    return headers.find(h => h.name?.toLowerCase() === 'message-id')?.value;
+                                })
+                                .filter(Boolean)
+                                .map(id => id && (id.includes('<') ? id : `<${id}>`));
+                            
+                            if (messageIds && messageIds.length > 0) {
+                                validatedArgs.references = messageIds.join(' ');
+                            }
+                        } catch (error) {
+                            console.warn('Could not auto-build references chain:', error);
+                        }
+                    }
+                    
                     const action = name === "send_email" ? "send" : "draft";
                     return await handleEmailAction(action, validatedArgs);
                 }
