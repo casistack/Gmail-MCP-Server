@@ -199,9 +199,9 @@ const SendEmailSchema = z.object({
     mimeType: z.enum(['text/plain', 'text/html', 'multipart/alternative']).optional().default('text/plain').describe("Email content type"),
     cc: z.array(z.string()).optional().describe("List of CC recipients"),
     bcc: z.array(z.string()).optional().describe("List of BCC recipients"),
-    threadId: z.string().optional().describe("Thread ID to reply to. When replying (inReplyTo set), threadId enables automatic References chain building"),
-    inReplyTo: z.string().optional().describe("Message ID being replied to"),
-    references: z.string().optional().describe("Full References header chain (auto-built from threadId if not provided). Format: '<msg1@example.com> <msg2@example.com>'"),
+    threadId: z.string().optional().describe("Thread ID to reply to. REQUIRED when using inReplyTo for automatic References chain building (proper email threading)"),
+    inReplyTo: z.string().optional().describe("Message ID being replied to. Must be used with threadId for proper threading"),
+    references: z.string().optional().describe("Full References header chain (auto-built from threadId when replying). Manual override only if needed. Format: '<msg1@example.com> <msg2@example.com>'"),
     attachments: z.array(z.string()).optional().describe("List of file paths to attach to the email"),
 });
 
