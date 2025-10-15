@@ -49,9 +49,8 @@ export function createEmailMessage(validatedArgs: any): string {
         validatedArgs.cc ? `Cc: ${validatedArgs.cc.join(', ')}` : '',
         validatedArgs.bcc ? `Bcc: ${validatedArgs.bcc.join(', ')}` : '',
         `Subject: ${encodedSubject}`,
-        // Add thread-related headers if specified
         validatedArgs.inReplyTo ? `In-Reply-To: ${validatedArgs.inReplyTo}` : '',
-        validatedArgs.inReplyTo ? `References: ${validatedArgs.inReplyTo}` : '',
+        validatedArgs.references ? `References: ${validatedArgs.references}` : (validatedArgs.inReplyTo ? `References: ${validatedArgs.inReplyTo}` : ''),
         'MIME-Version: 1.0',
     ].filter(Boolean);
 
@@ -128,7 +127,7 @@ export async function createEmailWithNodemailer(validatedArgs: any): Promise<str
     }
 
     const mailOptions = {
-        from: 'me', // Gmail API will replace this with the authenticated user
+        from: 'me',
         to: validatedArgs.to.join(', '),
         cc: validatedArgs.cc?.join(', '),
         bcc: validatedArgs.bcc?.join(', '),
@@ -137,7 +136,7 @@ export async function createEmailWithNodemailer(validatedArgs: any): Promise<str
         html: validatedArgs.htmlBody,
         attachments: attachments,
         inReplyTo: validatedArgs.inReplyTo,
-        references: validatedArgs.inReplyTo
+        references: validatedArgs.references || validatedArgs.inReplyTo
     };
 
     // Generate the raw message

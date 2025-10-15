@@ -201,6 +201,7 @@ const SendEmailSchema = z.object({
     bcc: z.array(z.string()).optional().describe("List of BCC recipients"),
     threadId: z.string().optional().describe("Thread ID to reply to"),
     inReplyTo: z.string().optional().describe("Message ID being replied to"),
+    references: z.string().optional().describe("Full References header chain for proper email threading"),
     attachments: z.array(z.string()).optional().describe("List of file paths to attach to the email"),
 });
 
@@ -618,6 +619,8 @@ async function main() {
                     const from = headers.find(h => h.name?.toLowerCase() === 'from')?.value || '';
                     const to = headers.find(h => h.name?.toLowerCase() === 'to')?.value || '';
                     const date = headers.find(h => h.name?.toLowerCase() === 'date')?.value || '';
+                    const messageId = headers.find(h => h.name?.toLowerCase() === 'message-id')?.value || '';
+                    const references = headers.find(h => h.name?.toLowerCase() === 'references')?.value || '';
                     const threadId = response.data.threadId || '';
 
                     // Extract email content using the recursive function
@@ -664,7 +667,7 @@ async function main() {
                         content: [
                             {
                                 type: "text",
-                                text: `Thread ID: ${threadId}\nSubject: ${subject}\nFrom: ${from}\nTo: ${to}\nDate: ${date}\n\n${contentTypeNote}${body}${attachmentInfo}`,
+                                text: `Thread ID: ${threadId}\nMessage-ID: ${messageId}\nReferences: ${references}\nSubject: ${subject}\nFrom: ${from}\nTo: ${to}\nDate: ${date}\n\n${contentTypeNote}${body}${attachmentInfo}`,
                             },
                         ],
                     };
