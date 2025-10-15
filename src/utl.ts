@@ -49,8 +49,8 @@ export function createEmailMessage(validatedArgs: any): string {
         validatedArgs.cc ? `Cc: ${validatedArgs.cc.join(', ')}` : '',
         validatedArgs.bcc ? `Bcc: ${validatedArgs.bcc.join(', ')}` : '',
         `Subject: ${encodedSubject}`,
-        validatedArgs.inReplyTo ? `In-Reply-To: ${validatedArgs.inReplyTo}` : '',
-        validatedArgs.references ? `References: ${validatedArgs.references}` : (validatedArgs.inReplyTo ? `References: ${validatedArgs.inReplyTo}` : ''),
+        validatedArgs.inReplyTo ? `In-Reply-To: <${validatedArgs.inReplyTo}>` : '',
+        validatedArgs.references ? `References: ${validatedArgs.references}` : (validatedArgs.inReplyTo ? `References: <${validatedArgs.inReplyTo}>` : ''),
         'MIME-Version: 1.0',
     ].filter(Boolean);
 
