@@ -16,6 +16,18 @@ function encodeEmailHeader(text: string): string {
     return text;
 }
 
+/**
+ * Ensures Message-ID is properly formatted with angle brackets per RFC 5322
+ * Handles both raw Message-IDs and those already wrapped in brackets
+ */
+function formatMessageId(messageId: string): string {
+    if (!messageId) return '';
+    // Remove any existing angle brackets first
+    const clean = messageId.replace(/^<|>$/g, '').trim();
+    // Return with proper angle brackets
+    return `<${clean}>`;
+}
+
 export const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -50,8 +62,10 @@ export function createEmailMessage(validatedArgs: any): string {
         validatedArgs.bcc ? `Bcc: ${validatedArgs.bcc.join(', ')}` : '',
         `Subject: ${encodedSubject}`,
         // Add thread-related headers if specified
-        validatedArgs.inReplyTo ? `In-Reply-To: ${validatedArgs.inReplyTo}` : '',
-        validatedArgs.inReplyTo ? `References: ${validatedArgs.inReplyTo}` : '',
+        // Fixed: Properly format Message-ID with angle brackets per RFC 5322
+        validatedArgs.inReplyTo ? `In-Reply-To: ${formatMessageId(validatedArgs.inReplyTo)}` : '',
+        // Use explicit references chain if provided, otherwise use inReplyTo
+        validatedArgs.references ? `References: ${validatedArgs.references}` : (validatedArgs.inReplyTo ? `References: ${formatMessageId(validatedArgs.inReplyTo)}` : ''),
         'MIME-Version: 1.0',
     ].filter(Boolean);
 
@@ -136,8 +150,9 @@ export async function createEmailWithNodemailer(validatedArgs: any): Promise<str
         text: validatedArgs.body,
         html: validatedArgs.htmlBody,
         attachments: attachments,
+        // Fixed: Use references chain if provided, otherwise fall back to inReplyTo
         inReplyTo: validatedArgs.inReplyTo,
-        references: validatedArgs.inReplyTo
+        references: validatedArgs.references || validatedArgs.inReplyTo
     };
 
     // Generate the raw message
